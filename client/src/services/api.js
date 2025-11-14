@@ -92,7 +92,9 @@ export const categoryService = {
   // Get all categories
   getAllCategories: async () => {
     const response = await api.get('/categories');
-    return response.data;
+    // Support both response shapes: [] OR { categories: [] }
+    const data = response.data;
+    return Array.isArray(data) ? data : (data && data.categories) ? data.categories : [];
   },
 
   // Create a new category
@@ -133,4 +135,19 @@ export const authService = {
   },
 };
 
-export default api; 
+export default api;
+
+export const postServiceMultipart = {
+  createPostMultipart: async (formData) => {
+    const response = await api.post('/posts', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+  updatePostMultipart: async (id, formData) => {
+    const response = await api.put(`/posts/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  }
+};

@@ -14,18 +14,18 @@ const PostSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please provide content'],
     },
+    excerpt: {
+      type: String,
+      maxlength: [200, 'Excerpt cannot be more than 200 characters'],
+    },
     featuredImage: {
       type: String,
-      default: 'default-post.jpg',
+      default: 'default-post.jpg', // optional if no file uploaded
     },
     slug: {
       type: String,
       required: true,
       unique: true,
-    },
-    excerpt: {
-      type: String,
-      maxlength: [200, 'Excerpt cannot be more than 200 characters'],
     },
     author: {
       type: mongoose.Schema.Types.ObjectId,
@@ -68,15 +68,13 @@ const PostSchema = new mongoose.Schema(
 
 // Create slug from title before saving
 PostSchema.pre('save', function (next) {
-  if (!this.isModified('title')) {
-    return next();
-  }
-  
+  if (!this.isModified('title')) return next();
+
   this.slug = this.title
     .toLowerCase()
     .replace(/[^\w ]+/g, '')
     .replace(/ +/g, '-');
-    
+
   next();
 });
 
@@ -97,4 +95,4 @@ PostSchema.methods.incrementViewCount = function () {
   return this.save();
 };
 
-module.exports = mongoose.model('Post', PostSchema); 
+module.exports = mongoose.model('Post', PostSchema);

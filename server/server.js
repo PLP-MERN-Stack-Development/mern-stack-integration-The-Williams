@@ -55,24 +55,40 @@ app.use((err, req, res, next) => {
 });
 
 // Connect to MongoDB and start server
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    app.listen(PORT, () => {
+const startServer = async () => {
+  const mongoUri = process.env.MONGODB_URI;
+
+  try {
+    if (mongoUri) {
+      await mongoose.connect(mongoUri, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+      console.log('Connected to MongoDB');
+    } else {
+      console.warn('MONGODB_URI not set — starting server without DB connection');
+    }
+
+    const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
-  })
-  .catch((err) => {
-    console.error('Failed to connect to MongoDB', err);
-    process.exit(1);
-  });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Promise Rejection:', err);
-  // Close server & exit process
-  process.exit(1);
-});
+    // Graceful handlers
+    process.on('unhandledRejection', (err) => {
+      console.error('Unhandled Promise Rejection:', err);
+      server.close(() => process.exit(1));
+    });
+
+    process.on('uncaughtException', (err) => {
+      console.error('Uncaught Exception:', err);
+      server.close(() => process.exit(1));
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 module.exports = app; 
